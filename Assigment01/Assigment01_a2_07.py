@@ -1,9 +1,9 @@
 """
 Starter code for logistic regression model to solve OCR task 
 with MNIST in TensorFlow
-MNIST dataset: yann.lecun.com/exdb/mnist/
-
-Accuracy: 0.987999975681
+notMNIST dataset: http://yaroslavvb.com/upload/notMNIST/
+before please read and follow the file notMNIST_readme.md
+Accuracy: 0.970222234726
 """
 
 import tensorflow as tf
@@ -11,7 +11,7 @@ from tensorflow.examples.tutorials.mnist import input_data as mnist_data
 import time
 import math
 	
-def multilayer_perceptron_5layers(x, weights, biases, size_fully_1):
+def multilayer_perceptron_5layers(x, weights, biases, size_fully_1, pkeep):
 	stride = 1	
 	layer1 = tf.nn.conv2d(x, weights['h1'], strides=[1,stride,stride,1], padding='SAME') + biases['b1']
 	layer1 = tf.nn.relu(layer1)
@@ -27,19 +27,22 @@ def multilayer_perceptron_5layers(x, weights, biases, size_fully_1):
 
 	layer4 = tf.add(tf.matmul(layer3, weights['h4']), biases['b4'])
 	layer4 = tf.nn.relu(layer4)
+	layer4 = tf.nn.dropout(layer4, pkeep)
 
 	output_layer = tf.add(tf.matmul(layer4, weights['out']), biases['out'])
 	return output_layer
 
-mnist = mnist_data.read_data_sets("data", one_hot=True, reshape=False, validation_size=0)
+mnist = mnist_data.read_data_sets("notMNIST-to-MNIST", one_hot=True, reshape=False, validation_size=0)
 
 lr = tf.placeholder(tf.float32, name="placeholder_learning_rate")
+pkeep = tf.placeholder(tf.float32, name="placeholder_learning_rate")
+
 min_learning_rate = 0.003
 max_learning_rate = 0.0001
 decay_speed = 2000
 
-training_epochs = 150
-batch_size = 100
+training_epochs = 1500
+batch_size = 1000
 display_step = 1
 
 size_image = 28
@@ -68,7 +71,7 @@ biases = {
 	'out': tf.Variable(tf.ones([n_classes])/10, name="var_wbias")
 }
 
-pred = multilayer_perceptron_5layers(x, weights, biases, depth_layer_conv_3)
+pred = multilayer_perceptron_5layers(x, weights, biases, depth_layer_conv_3, pkeep)
 
 entropy = tf.nn.softmax_cross_entropy_with_logits(logits=pred, labels = y)
 loss = tf.reduce_mean(entropy, name="loss")
@@ -80,14 +83,16 @@ with tf.Session() as sess:
 	sess.run(tf.global_variables_initializer())
 
 	writer = tf.summary.FileWriter("/tmp/test", graph=sess.graph)
+	total_batch = int(mnist.train.num_examples/batch_size)
+	print "number training examples: {0} total batch: {1}".format(mnist.train.num_examples, total_batch)
+	
 	for epoch in range(training_epochs):		
-		total_loss = 0
-		total_batch = int(mnist.train.num_examples/batch_size)
+		total_loss = 0			
 		learning_rate = min_learning_rate + (max_learning_rate-min_learning_rate)*math.exp(-epoch/decay_speed)
 
 		for i in range(total_batch):
 			x_batch, y_batch = mnist.train.next_batch(batch_size)
-			_, c = sess.run([optimizer, loss], feed_dict={x: x_batch, y: y_batch, lr:learning_rate})
+			_, c = sess.run([optimizer, loss], feed_dict={x: x_batch, y: y_batch, lr:learning_rate, pkeep: 0.75})
 			total_loss += c
 		if epoch % display_step == 0:
 			print "Average loss epoch {0}: {1}".format(epoch+1, total_loss/total_batch)
@@ -96,7 +101,7 @@ with tf.Session() as sess:
 
 	correct_prediction = tf.equal(tf.argmax(pred,1), tf.argmax(y,1))
 	accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
-	print "Accuracy: {0}".format(accuracy.eval({x: mnist.test.images, y:mnist.test.labels}))
+	print "Accuracy: {0}".format(accuracy.eval({x: mnist.test.images, y:mnist.test.labels, pkeep:1.00}))
 
 	writer.close()
 

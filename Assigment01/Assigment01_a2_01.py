@@ -16,7 +16,7 @@ learning_rate = 0.01
 batch_size = 128
 n_epochs = 15
 
-mnist = input_data.read_data_sets('/home/marchelo/CesarBragagnini/tf012_py27/Assigment01/data', one_hot=True) 
+mnist = input_data.read_data_sets('data', one_hot=True) 
 
 X = tf.placeholder(tf.float32, shape=[None, 784], name="placeholder_X")
 Y = tf.placeholder(tf.float32, shape=[None, 10], name="placeholder_Y")

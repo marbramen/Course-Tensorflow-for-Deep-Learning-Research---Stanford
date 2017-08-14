@@ -32,7 +32,7 @@ def multilayer_perceptron_5layers(x, weights, biases, size_fully_1, pkeep):
 	output_layer = tf.add(tf.matmul(layer4, weights['out']), biases['out'])
 	return output_layer
 
-mnist = mnist_data.read_data_sets("/home/marchelo/CesarBragagnini/tf012_py27/Assigment01/data", one_hot=True, reshape=False, validation_size=0)
+mnist = mnist_data.read_data_sets("data", one_hot=True, reshape=False, validation_size=0)
 
 lr = tf.placeholder(tf.float32, name="placeholder_learning_rate")
 pkeep = tf.placeholder(tf.float32, name="placeholder_learning_rate")
